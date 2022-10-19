@@ -11,7 +11,6 @@ import {
   UseInterceptors,
   Body,
   UseGuards,
-  Req,
 } from '@nestjs/common';
 import { CatsService } from './cats.service';
 import { PositiveIntPipe } from '../common/pipes/positiveInt.pipe';
@@ -21,7 +20,8 @@ import { ReadonlyCatDto } from './dto/cat.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginRequestDto } from 'src/auth/dto/login.request';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
-import { Request } from 'express';
+import { CurrentUser } from 'src/common/decorator/user.decorator';
+import { Cat } from './cats.schema';
 
 @Controller('cats')
 @UseInterceptors(SuccessInterceptor)
@@ -35,8 +35,8 @@ export class CatsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get()
-  getCurrentCat(@Req() req: Request) {
-    return req.user;
+  getCurrentCat(@CurrentUser() cat: Cat) {
+    return cat.readOnlyData;
   }
 
   @ApiResponse({
