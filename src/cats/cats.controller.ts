@@ -6,19 +6,22 @@ import {
   Patch,
   Post,
   Put,
-  HttpException,
   Param,
   ParseIntPipe,
   UseInterceptors,
   Body,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { CatsService } from './cats.service';
 import { PositiveIntPipe } from '../common/pipes/positiveInt.pipe';
 import { SuccessInterceptor } from 'src/common/interceptors/logging.interceptor';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ReadonlyCatDto } from './dto/cat.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginRequestDto } from 'src/auth/dto/login.request';
+import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
+import { Request } from 'express';
 
 @Controller('cats')
 @UseInterceptors(SuccessInterceptor)
@@ -28,10 +31,12 @@ export class CatsController {
     private readonly authService: AuthService,
   ) {}
 
+  @ApiOperation({ summary: '현재 고양이 정보 가져오기' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Get()
-  getCurrentCat() {
-    throw new HttpException('api broken', 401);
-    return 'all cat';
+  getCurrentCat(@Req() req: Request) {
+    return req.user;
   }
 
   @ApiResponse({
@@ -46,7 +51,6 @@ export class CatsController {
   @ApiOperation({ summary: '회원가입' })
   @Post()
   async signUp(@Body() body: CatRequestDto) {
-    console.log(body);
     return await this.catsService.signUp(body);
   }
 
