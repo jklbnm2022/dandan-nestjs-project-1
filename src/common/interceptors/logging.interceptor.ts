@@ -12,7 +12,6 @@ export class SuccessInterceptor implements NestInterceptor {
     context: ExecutionContext,
     next: CallHandler<any>,
   ): Observable<any> | Promise<Observable<any>> {
-    console.log('Before...');
 
     return next.handle().pipe(map((data) => ({ success: true, data })));
   }
