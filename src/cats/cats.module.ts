@@ -1,3 +1,4 @@
+import { CatsRepository } from './cats.repository';
 import { Cat, CatSchema } from './cats.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Module } from '@nestjs/common';
@@ -6,7 +7,7 @@ import { CatsController } from './cats.controller';
 
 @Module({
   imports: [MongooseModule.forFeature([{ name: Cat.name, schema: CatSchema }])],
-  providers: [CatsService],
+  providers: [CatsService, CatsRepository],
   controllers: [CatsController],
 })
 export class CatsModule {}
