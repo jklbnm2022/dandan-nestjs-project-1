@@ -21,4 +21,9 @@ export class CatsRepository {
     });
     return cat.readOnlyData;
   }
+
+  async findCatByEmail(email): Promise<Cat | null> {
+    const cat = await this.catModel.findOne({ email });
+    return cat;
+  }
 }
