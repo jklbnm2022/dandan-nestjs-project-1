@@ -17,6 +17,7 @@ async function bootstrap() {
     .setDescription('The cats API description')
     .setVersion('1.0')
     .addTag('cats')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'Token' })
     .build();
   const document: OpenAPIObject = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
