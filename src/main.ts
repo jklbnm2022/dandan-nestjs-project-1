@@ -4,9 +4,11 @@ import { SwaggerModule, DocumentBuilder, OpenAPIObject } from '@nestjs/swagger';
 import * as expressBasicAuth from 'express-basic-auth';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/exceptions/http-exception.filter';
+import * as path from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   // validation
   app.useGlobalPipes(new ValidationPipe());
   // catch filter
@@ -20,6 +22,11 @@ async function bootstrap() {
       },
     }),
   );
+
+  // server url(dirname) + (/media) + /common/uploads
+  app.useStaticAssets(path.join(__dirname, './common', 'uploads'), {
+    prefix: '/media',
+  });
 
   // swagger
   const config = new DocumentBuilder()
@@ -39,6 +46,8 @@ async function bootstrap() {
   });
 
   // run server
-  await app.listen(process.env.PORT ?? 8000);
+  await app.listen(process.env.PORT ?? 8000, () => {
+    console.info(`Server is running in PORT:${process.env.PORT ?? 8000}`);
+  });
 }
 bootstrap();
