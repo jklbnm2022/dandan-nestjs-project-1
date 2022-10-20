@@ -1,7 +1,7 @@
 import { CatRequestDto } from './dto/cats.request.dto';
-import { Injectable, HttpException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Cat } from './cats.schema';
 import { ReadonlyCatDto } from './dto/cat.dto';
 
@@ -28,9 +28,11 @@ export class CatsRepository {
     return cat;
   }
 
-  async findCatByIdWithoutPassword(id: string): Promise<ReadonlyCatDto | null> {
+  async findCatByIdWithoutPassword(
+    id: Types.ObjectId,
+  ): Promise<Cat | null> {
     const cat = await this.catModel.findById(id).select('-password');
-    return cat.readOnlyData;
+    return cat;
   }
 
   async findByIdAndUpdateImg(
