@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Payload } from './jwt.payload';
 import { CatsRepository } from 'src/cats/cats.repository';
+import mongoose from 'mongoose';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -15,9 +16,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: Payload) {
-    const cat = await this.catsRepository.findCatByIdWithoutPassword(
-      payload.sub,
-    );
+    const sub = new mongoose.Types.ObjectId(payload.sub);
+    const cat = await this.catsRepository.findCatByIdWithoutPassword(sub);
 
     if (!cat) {
       throw new UnauthorizedException(
