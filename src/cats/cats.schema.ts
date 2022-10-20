@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, SchemaOptions } from 'mongoose';
+import { Document, SchemaOptions, Types } from 'mongoose';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -52,13 +52,20 @@ export class Cat extends Document {
   })
   imgUrl: string;
 
-  readonly readOnlyData: { id: string; email: string; name: string, imgUrl: string };
+  readonly readOnlyData: readOnlyDataType;
 }
 
 export const CatSchema = SchemaFactory.createForClass(Cat);
 
+type readOnlyDataType = {
+  id: Types.ObjectId;
+  email: string;
+  name: string;
+  imgUrl: string;
+};
+
 // 가상의 필드
-CatSchema.virtual('readOnlyData').get(function (this: Cat) {
+CatSchema.virtual('readOnlyData').get(function (this: Cat): readOnlyDataType {
   return {
     id: this.id,
     email: this.email,
