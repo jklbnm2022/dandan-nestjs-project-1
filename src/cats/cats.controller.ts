@@ -1,19 +1,14 @@
 import { CatRequestDto } from './dto/cats.request.dto';
 import {
   Controller,
-  Delete,
   Get,
-  Patch,
   Post,
-  Put,
-  Param,
-  ParseIntPipe,
   UseInterceptors,
   Body,
   UseGuards,
+  UploadedFiles,
 } from '@nestjs/common';
 import { CatsService } from './cats.service';
-import { PositiveIntPipe } from '../common/pipes/positiveInt.pipe';
 import { SuccessInterceptor } from 'src/common/interceptors/logging.interceptor';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ReadonlyCatDto } from './dto/cat.dto';
@@ -22,6 +17,8 @@ import { LoginRequestDto } from 'src/auth/dto/login.request';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { CurrentUser } from 'src/common/decorator/user.decorator';
 import { Cat } from './cats.schema';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { multerOptions } from 'src/common/utils/multer.options';
 
 @Controller('cats')
 @UseInterceptors(SuccessInterceptor)
@@ -67,28 +64,20 @@ export class CatsController {
   }
 
   @ApiOperation({ summary: '고양이 이미지 업로드' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FilesInterceptor('image', 10, multerOptions('cats')))
   @Post('upload')
-  uploadCatImg() {
-    return 'uploadImg';
+  uploadCatImg(
+    @CurrentUser() cat: Cat,
+    @UploadedFiles() files: Array<Express.Multer.File>,
+  ) {
+    return this.catsService.uploadImg(cat, files);
   }
 
-  @Get(':id')
-  getCat(@Param('id', ParseIntPipe, PositiveIntPipe) id: number) {
-    return { id };
-  }
-
-  @Put(':id')
-  updateCat() {
-    return;
-  }
-
-  @Patch(':id')
-  updatePartialCat() {
-    return;
-  }
-
-  @Delete(':id')
-  deleteCat() {
-    return;
+  @ApiOperation({ summary: '모든 고양이 가져오기' })
+  @Get('all')
+  getAllCat() {
+    return this.catsService.getAllCat();
   }
 }

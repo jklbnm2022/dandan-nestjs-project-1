@@ -48,10 +48,11 @@ export class Cat extends Document {
 
   @Prop({
     required: false,
+    default: '',
   })
   imgUrl: string;
 
-  readonly readOnlyData: { id: string; email: string; name: string };
+  readonly readOnlyData: { id: string; email: string; name: string, imgUrl: string };
 }
 
 export const CatSchema = SchemaFactory.createForClass(Cat);
@@ -62,5 +63,6 @@ CatSchema.virtual('readOnlyData').get(function (this: Cat) {
     id: this.id,
     email: this.email,
     name: this.name,
+    imgUrl: this.imgUrl,
   };
 });
