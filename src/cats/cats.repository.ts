@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Cat } from './cats.schema';
-import { ReadonlyCatDto } from './dto/cat.dto';
+import { ReadOnlyCatDto } from './dto/cat.dto';
 
 @Injectable()
 export class CatsRepository {
@@ -28,9 +28,7 @@ export class CatsRepository {
     return cat;
   }
 
-  async findCatByIdWithoutPassword(
-    id: Types.ObjectId,
-  ): Promise<Cat | null> {
+  async findCatByIdWithoutPassword(id: Types.ObjectId): Promise<Cat | null> {
     const cat = await this.catModel.findById(id).select('-password');
     return cat;
   }
@@ -38,7 +36,7 @@ export class CatsRepository {
   async findByIdAndUpdateImg(
     id: string,
     fileName: string,
-  ): Promise<ReadonlyCatDto> {
+  ): Promise<ReadOnlyCatDto> {
     const cat = await this.catModel.findById(id);
     cat.imgUrl = `http://localhost:8000/media/${fileName}`;
     const newCat = await cat.save();
@@ -46,6 +44,10 @@ export class CatsRepository {
   }
 
   async findAll() {
-    return await this.catModel.find();
+    const result = await this.catModel
+      .find({})
+      .populate('comments');
+
+    return result;
   }
 }
