@@ -51,6 +51,12 @@ export class Cat extends Document {
     required: false,
     default: '',
   })
+  imgKey: string;
+
+  @Prop({
+    require: false,
+    default: '',
+  })
   imgUrl: string;
 
   readonly readOnlyData: readOnlyDataType;
