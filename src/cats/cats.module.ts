@@ -8,6 +8,7 @@ import { AuthModule } from 'src/auth/auth.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { Comments, CommentsSchema } from 'src/comments/comments.schema';
 import * as multer from 'multer';
+import { AwsService } from 'src/aws/aws.service';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import * as multer from 'multer';
       storage: multer.memoryStorage()
     }),
   ],
-  providers: [CatsService, CatsRepository],
+  providers: [CatsService, CatsRepository, AwsService],
   controllers: [CatsController],
   exports: [CatsService, CatsRepository],
 })
