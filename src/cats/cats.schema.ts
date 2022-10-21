@@ -59,12 +59,12 @@ export class Cat extends Document {
   })
   imgUrl: string;
 
-  readonly readOnlyData: readOnlyDataType;
+  readonly readOnlyData: ReadOnlyDataType;
 
   readonly comments: Comments[];
 }
 
-type readOnlyDataType = {
+type ReadOnlyDataType = {
   id: Types.ObjectId;
   email: string;
   name: string;
