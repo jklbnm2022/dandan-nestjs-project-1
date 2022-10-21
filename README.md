@@ -4,9 +4,7 @@
 - 코드 작성 범위 : 섹션 3 ~ 섹션 5. 프로젝트 배포와 서버 운영(AWS-SDK를 사용하여 S3에 업로드) 까지
 
 ## 개발환경
-
-강의 촬영 당시가 아닌 현재 시점 최신 버전을 활용하여 코드를 작성하였습니다. 최신 버전을 활용하여 강의를 듣다가 되지 않는 부분이 있을 때 레포지토리를 참고할 수 있도록 하기 위해서입니다.
-
+저는 현재 실무에서 NestJS와 Typeorm 의 최신버전을 활용하여 백엔드 코드를 작성하고 있습니다. 그렇기에 이 레포지토리의 코드 또한 강의 촬영 당시가 아닌 현재(2022.10.21.) 시점 최신 버전을 활용하여 코드를 작성하였습니다.
 - NestJS v9
 - Mongoose v6
 - AWS-SDK v2
@@ -17,7 +15,7 @@
 
 `src/auth/auth.module.ts`
 
-```js
+```ts
 // jwtModule 을 register 가 아닌 registerAsync 로 등록합니다.
 JwtModule.registerAsync({
   inject: [ConfigService],
@@ -33,7 +31,7 @@ JwtModule.registerAsync({
 
 `src/auth/jwt/jwt.payload.ts`
 
-```js
+```ts
 async validate(payload: Payload) {
   /*
   sub를 string 으로 받더라도 타입을 ObjectId로 치환합니다.
@@ -57,7 +55,7 @@ async validate(payload: Payload) {
 
 `src/aws/dto/s3.response.dto.ts`
 
-```js
+```ts
 import { AWSError } from 'aws-sdk';
 import { PutObjectOutput } from 'aws-sdk/clients/s3';
 import { PromiseResult } from 'aws-sdk/lib/request';
@@ -72,7 +70,7 @@ export class S3ResDto {
 
 `src/aws/aws.service.ts`
 
-```js
+```ts
 @Injectable()
 export class AwsService {
   private readonly awsS3: AWS.S3;
@@ -96,7 +94,7 @@ export class AwsService {
 
 `src/cats/cat.schema.ts`
 
-```js
+```ts
 export class Cat extends Document {
   /*
   생략
@@ -118,12 +116,12 @@ export class Cat extends Document {
   imgUrl: string;
 
   /*
-  readOnlyDataType 을 지정하여 readOnlyDataType 을 사용하는 곳에서 type을 두 번 작성하는 일이 없게 했습니다.
+  ReadOnlyDataType 을 지정하여 readOnlyData 를 사용하는 곳에서 type을 두 번 작성하는 일이 없게 했습니다.
   */
-  readonly readOnlyData: readOnlyDataType;
+  readonly readOnlyData: ReadOnlyDataType;
 }
 
-type readOnlyDataType = {
+type ReadOnlyDataType = {
   id: Types.ObjectId;
   email: string;
   name: string;
@@ -132,35 +130,80 @@ type readOnlyDataType = {
 };
 ```
 
-`src/cats/controllers/cats.controller.ts`
+`src/cats/cats.module.ts`
 
-```js
-/*
-  고양이 이미지 업로드 및 제거 과정에서 id 를 받지 않습니다. 고양이 이미지를 profile 로 가정할 때,
-  고양이는 '자신의' 이미지만 추가 혹은 제거할 수 있어야 하기 때문입니다.
-  만약 인스타그램처럼 게시글 내 이미지를 추가 또는 삭제해야 한다면, 수정할 게시글 id 와 삭제할 이미지 혹은 이미지의 key 값을 받으면 됩니다.
-*/
+```ts
+MulterModule.register({
+  // destination
+  dest: './upload',
+  storage: multer.memoryStorage()
+}),
+```
 
-@UseInterceptors(FilesInterceptor('image', 10))
-@UseGuards(JwtAuthGuard)
-@Post('profile')
-uploadCatImg(
-  @UploadedFiles() files: Array<Express.Multer.File>,
-  @CurrentUser() cat: Cat,
-) {
-  return this.catsService.uploadImg(cat, files);
-}
+- buffer 문제 해결은 강의 질문 게시판에서 홍승빈 님이 작성하신 [글](https://inflearn.com/questions/653198)을 참고했습니다.
 
-@UseGuards(JwtAuthGuard)
-@Delete('profile')
-deleteCatImg(@CurrentUser() cat: Cat) {
-  return this.catsService.deleteImg(cat);
+`src/cats/cats.repository.ts`
+
+```ts
+@Injectable()
+export class CatsRepository {
+  constructor(@InjectModel(Cat.name) private readonly catModel: Model<Cat>) {}
+
+  async existsByEmail(email: string): Promise<boolean> {
+    const isCatExist = await this.catModel.exists({ email });
+    return Boolean(isCatExist);
+  }
+
+  async createUser({ name, password, email }: CatRequestDto) {
+    const cat = await this.catModel.create({
+      name,
+      password,
+      email,
+    });
+    return cat.readOnlyData;
+  }
+
+  async findCatByEmail(email): Promise<Cat | null> {
+    const cat = await this.catModel.findOne({ email });
+    return cat;
+  }
+
+  // id 의 타입이 string 이 아니라 ObjectId 입니다.
+  async findCatByIdWithoutPassword(id: Types.ObjectId): Promise<Cat | null> {
+    const cat = await this.catModel.findById(id).select('-password');
+    return cat;
+  }
+
+  // 업로드 후 관련 데이터를 DB 에 적용합니다.
+  async findByIdAndUpdateImg(
+    id: string,
+    imgKey: string,
+    imgUrl: string,
+  ): Promise<ReadOnlyCatDto> {
+    const cat = await this.catModel.findById(id);
+    cat.imgKey = imgKey;
+    cat.imgUrl = imgUrl;
+    const newCat = await cat.save();
+    return newCat.readOnlyData;
+  }
+
+  // mongoose 6 부터로 추정됩니다만. populate에 2번째에 Model 을 넣으면 이미 계산했다는 에러가 납니다. 아래와 같이 빼주면 됩니다.
+  async findAll() {
+    return await this.catModel.find({}).populate('comments');
+  }
+
+  async deleteUserImg(cat: Cat) {
+    cat.imgKey = '';
+    cat.imgUrl = '';
+    const newCat = await cat.save();
+    return newCat.readOnlyData;
+  }
 }
 ```
 
 `src/cats/services/cats.service.ts`
 
-```js
+```ts
 /*
 컨트롤러가 변경된 것과 같은 이유로, 따로 body를 받지 않고 cat.id 를 통해 목표로 하는 user id 를 찾아 적용합니다.
 */
@@ -191,29 +234,122 @@ async deleteImg(cat: Cat) {
 }
 ```
 
-`src/cats/cats.module.ts`
-```js
-MulterModule.register({
-  // destination
-  dest: './upload',
-  storage: multer.memoryStorage()
-}),
-```
-- 강의 질문 게시판의 [글](https://inflearn.com/questions/653198)을 참고했습니다. 작성자 홍승빈 님께 감사합니다.
+`src/cats/controllers/cats.controller.ts`
 
-`src/cats/cats.repository.ts`
-```js
+```ts
+/*
+  고양이 이미지 업로드 및 제거 과정에서 id 를 받지 않습니다. 고양이 이미지를 profile 로 가정할 때,
+  고양이는 '자신의' 이미지만 추가 혹은 제거할 수 있어야 하기 때문입니다.
+  만약 인스타그램처럼 게시글 내 이미지를 추가 또는 삭제해야 한다면, 수정할 게시글 id 와 삭제할 이미지 혹은 이미지의 key 값을 받으면 됩니다.
+*/
 
+@UseInterceptors(FilesInterceptor('image', 10))
+@UseGuards(JwtAuthGuard)
+@Post('profile')
+uploadCatImg(
+  @UploadedFiles() files: Array<Express.Multer.File>,
+  @CurrentUser() cat: Cat,
+) {
+  return this.catsService.uploadImg(cat, files);
+}
+
+@UseGuards(JwtAuthGuard)
+@Delete('profile')
+deleteCatImg(@CurrentUser() cat: Cat) {
+  return this.catsService.deleteImg(cat);
+}
 ```
 
 ### comments
 
+- 강의에서는 `comments.service.ts`에 쿼리 내용도 넣었지만, 저는 repository 와 service 를 분리했습니다.
+- 강의에서 author 를 외부에서 string 으로 받지만, 저는 `@CurrentUser` 데코레이터를 이용해 user를 조회한 후, user.\_id 를 통해 author 를 입력했습니다. 그래서 `comments.create.dto.ts`, `repository`, `service`, `controller` 의 내용이 강의와 다릅니다.
+
+### common
+
+`src/common/pipes/parseStringToObjectId.pipe.ts`
+
+```ts
+/*
+몽구스의 Types 을 활용해 id 의 타입을 ObjectId 로 변경했습니다.
+이를 통해 컨트롤러 및 기타 함수에서 id 의 타입을 ObjectId 로 통일할 수 있습니다.
+*/
+
+import { Injectable, PipeTransform } from '@nestjs/common';
+import { Types } from 'mongoose';
+
+@Injectable()
+export class ParseObjectIdPipe implements PipeTransform {
+  transform(value: string) {
+    return new Types.ObjectId(value);
+  }
+}
+```
+
+### app
+`src/app.module.ts`
+```ts
+@Module(
+  {
+    imports: [
+      // isGlobal: true 를 해줘야 모든 곳에서 ConfigModule 을 사용하여 env 를 불러올 수 있습니다.
+      ConfigModule.forRoot({ isGlobal: true }),
+      MongooseModule.forRoot(
+        // url을 MONGODB_URI 로 바로 넣지 않았습니다. username, password, database 을 분리했습니다.
+        `${process.env.MONGO_URL_PREFIX}${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}${process.env.MONGO_URL_SUFFIX}${process.env.MONGO_DATABASE}`,
+        {
+          useNewUrlParser: true,
+          useUnifiedTopology: true,
+        },
+      ),
+    ]
+  }
+)
+```
+
+`src/main.ts`
+```ts
+async function bootstrap() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule)
+  /* 생략 */
+  // swagger
+  const config = new DocumentBuilder()
+    .setTitle('Cats example')
+    .setDescription('The cats API description')
+    .setVersion('1.0')
+    .addTag('cats')
+    // 스웨거에서 header에 authorization 설정을 해주기 위해서는 아래 메소드를 실행해야 합니다.
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'Token' })
+    .build();
+}
+
+```
+
 ## aws s3 설정 방법
-
+`버킷 정책`
 ```json
-
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::[bucket-name]/*"
+        },
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::[계정ID]:user/[권한을 줄 IAM 사용자명]"
+            },
+            "Action": [
+                "s3:DeleteObject",
+                "s3:PutObject",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": "arn:aws:s3:::[bucket-name]/*"
+        }
+    ]
+}
 ```
-
-```json
-
-```
+- 버킷 정책은 한승욱 님의 [AWS 버킷 권한과의 씨름...](https://wooogy-egg.tistory.com/77) 을 참고했습니다.
