@@ -1,5 +1,6 @@
 import {
   Body,
+  Delete,
   UploadedFiles,
   UseFilters,
   UseGuards,
@@ -58,14 +59,19 @@ export class CatsController {
   @ApiOperation({ summary: '고양이 이미지 업로드' })
   @UseInterceptors(FilesInterceptor('image', 10))
   @UseGuards(JwtAuthGuard)
-  @Post('upload')
+  @Post('profile')
   uploadCatImg(
     @UploadedFiles() files: Array<Express.Multer.File>,
     @CurrentUser() cat: Cat,
   ) {
-    console.log(files[0])
+    return this.catsService.uploadImg(cat, files);
+  }
 
-    // return this.catsService.uploadImg(cat, files);
+  @ApiOperation({ summary: '고양이 이미지 제거' })
+  @UseGuards(JwtAuthGuard)
+  @Delete('profile')
+  deleteCatImg(@CurrentUser() cat: Cat) {
+    return this.catsService.deleteImg(cat);
   }
 
   @ApiOperation({ summary: '모든 고양이 가져오기' })

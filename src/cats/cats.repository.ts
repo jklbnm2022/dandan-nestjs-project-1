@@ -35,19 +35,26 @@ export class CatsRepository {
 
   async findByIdAndUpdateImg(
     id: string,
-    fileName: string,
+    imgKey: string,
+    imgUrl: string,
   ): Promise<ReadOnlyCatDto> {
     const cat = await this.catModel.findById(id);
-    cat.imgUrl = `http://localhost:8000/media/${fileName}`;
+    cat.imgKey = imgKey;
+    cat.imgUrl = imgUrl;
     const newCat = await cat.save();
     return newCat.readOnlyData;
   }
 
   async findAll() {
-    const result = await this.catModel
-      .find({})
-      .populate('comments');
+    const result = await this.catModel.find({}).populate('comments');
 
     return result;
+  }
+
+  async deleteUserImg(cat: Cat) {
+    cat.imgKey = '';
+    cat.imgUrl = '';
+    const newCat = await cat.save();
+    return newCat.readOnlyData;
   }
 }
