@@ -7,6 +7,7 @@ import { CatsController } from './controllers/cats.controller';
 import { AuthModule } from 'src/auth/auth.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { Comments, CommentsSchema } from 'src/comments/comments.schema';
+import * as multer from 'multer';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { Comments, CommentsSchema } from 'src/comments/comments.schema';
     MulterModule.register({
       // destination
       dest: './upload',
+      storage: multer.memoryStorage()
     }),
   ],
   providers: [CatsService, CatsRepository],
