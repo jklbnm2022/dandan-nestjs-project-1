@@ -56,14 +56,16 @@ export class CatsController {
   }
 
   @ApiOperation({ summary: '고양이 이미지 업로드' })
-  @UseInterceptors(FilesInterceptor('image', 10, multerOptions('cats')))
+  @UseInterceptors(FilesInterceptor('image', 10))
   @UseGuards(JwtAuthGuard)
   @Post('upload')
   uploadCatImg(
     @UploadedFiles() files: Array<Express.Multer.File>,
     @CurrentUser() cat: Cat,
   ) {
-    return this.catsService.uploadImg(cat, files);
+    console.log(files[0])
+
+    // return this.catsService.uploadImg(cat, files);
   }
 
   @ApiOperation({ summary: '모든 고양이 가져오기' })
