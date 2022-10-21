@@ -3,6 +3,7 @@ import * as AWS from 'aws-sdk';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PromiseResult } from 'aws-sdk/lib/request';
+import { S3ResDto } from './dto/s3.response.dto';
 
 //* sharp: 이미지 변환하고 싶을 때 사용할 수 있는 (변환 후 업로드) 패키지
 
@@ -25,11 +26,7 @@ export class AwsService {
   async uploadFileToS3(
     folder: string,
     file: Express.Multer.File,
-  ): Promise<{
-    key: string;
-    s3Object: PromiseResult<AWS.S3.PutObjectOutput, AWS.AWSError>;
-    contentType: string;
-  }> {
+  ): Promise<S3ResDto> {
     try {
       const key = `${folder}/${Date.now()}_${path.basename(
         file.originalname,
