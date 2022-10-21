@@ -8,7 +8,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import * as mongoose from 'mongoose';
 import { CommentsModule } from './comments/comments.module';
-import { AwsService } from './aws.service';
+import { AwsService } from './aws/aws.service';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
