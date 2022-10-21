@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Types } from 'mongoose';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { Cat } from 'src/cats/cats.schema';
-import { CurrentUser } from 'src/common/decorator/user.decorator';
+import { CurrentUser } from 'src/common/decorators/user.decorator';
 import { ParseObjectIdPipe } from 'src/common/pipes/parseStringToObjectId.pipe';
 import { CommentsService } from './comments.service';
 import { CommentsCreateDto } from './dto/comments.create.dto';
@@ -31,7 +31,7 @@ export class CommentsController {
   }
 
   @ApiOperation({ summary: '좋아요 수 올리기' })
-  @Get(':id')
+  @Patch(':id')
   async plusLike(@Param('id', ParseObjectIdPipe) id: Types.ObjectId) {
     return this.commentsService.plusLike(id);
   }
