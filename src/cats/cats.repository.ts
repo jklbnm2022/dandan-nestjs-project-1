@@ -46,9 +46,7 @@ export class CatsRepository {
   }
 
   async findAll() {
-    const result = await this.catModel.find({}).populate('comments');
-
-    return result;
+    return await this.catModel.find({}).populate('comments');
   }
 
   async deleteUserImg(cat: Cat) {
