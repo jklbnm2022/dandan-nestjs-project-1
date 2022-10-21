@@ -1,15 +1,15 @@
-import { CatsRepository } from './cats.repository';
-import { Cat } from './cats.schema';
-import { CatRequestDto } from './dto/cats.request.dto';
+import { CatsRepository } from '../cats.repository';
+import { Cat } from '../cats.schema';
+import { CatRequestDto } from '../dto/cats.request.dto';
 import { ConflictException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { ReadonlyCatDto } from './dto/cat.dto';
+import { ReadOnlyCatDto } from '../dto/cat.dto';
 
 @Injectable()
 export class CatsService {
   constructor(private readonly catsRepository: CatsRepository) {}
 
-  async signUp(dto: CatRequestDto): Promise<ReadonlyCatDto> {
+  async signUp(dto: CatRequestDto): Promise<ReadOnlyCatDto> {
     const { email, password, name } = dto;
 
     // 이메일 중복 검사
